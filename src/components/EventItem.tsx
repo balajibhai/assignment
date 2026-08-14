@@ -11,6 +11,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import PersonIcon from "@mui/icons-material/Person";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import type { Event } from "../features/events/eventSlice";
+import EditEventDialog from "./EditEventDialog";
 import TimezoneSelect from "./TimezoneSelect";
 
 interface EventItemProps {
@@ -19,6 +20,7 @@ interface EventItemProps {
 
 function EventItem({ event }: EventItemProps) {
   const [timezone, setTimezone] = useState(event.timezone);
+  const [editing, setEditing] = useState(false);
 
   const start =
     event.startDate && event.startTime ? dayjs(`${event.startDate}T${event.startTime}`) : null;
@@ -83,7 +85,7 @@ function EventItem({ event }: EventItemProps) {
         <Divider />
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button size="small" startIcon={<EditIcon />}>
+          <Button size="small" startIcon={<EditIcon />} onClick={() => setEditing(true)}>
             Edit
           </Button>
           <Button size="small" startIcon={<ArticleIcon />}>
@@ -91,6 +93,8 @@ function EventItem({ event }: EventItemProps) {
           </Button>
         </Box>
       </Box>
+
+      {editing && <EditEventDialog event={event} onClose={() => setEditing(false)} />}
     </Card>
   );
 }

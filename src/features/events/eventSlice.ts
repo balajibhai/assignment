@@ -37,10 +37,23 @@ const eventsSlice = createSlice({
         };
       },
     },
+    updateEvent(
+      state,
+      action: PayloadAction<{
+        id: string;
+        changes: Omit<Event, "id" | "createdAt" | "updatedAt">;
+      }>,
+    ) {
+      const event = state.events.find((e) => e.id === action.payload.id);
+      if (event) {
+        Object.assign(event, action.payload.changes);
+        event.updatedAt = new Date().toISOString();
+      }
+    },
   },
 });
 
-export const { addEvent } = eventsSlice.actions;
+export const { addEvent, updateEvent } = eventsSlice.actions;
 
 export const selectEvents = (state: RootState) => state.events.events;
 
