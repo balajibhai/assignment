@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import dayjs from "dayjs";
 import Box from "@mui/material/Box";
@@ -37,8 +37,11 @@ function describeChange(modifiedKey: ModifiedKey): string {
 function EventLogsDialog({ event, onClose }: EventLogsDialogProps) {
   const dispatch = useDispatch<AppDispatch>();
   const logs = useSelector(selectEventLogs);
+  const fetchedEventIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    if (fetchedEventIdRef.current === event.id) return;
+    fetchedEventIdRef.current = event.id;
     dispatch(fetchEventLogs(event.id));
   }, [dispatch, event.id]);
 

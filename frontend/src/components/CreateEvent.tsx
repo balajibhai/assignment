@@ -5,17 +5,29 @@ import Button from "@mui/material/Button";
 import { addEvent } from "../features/events/eventSlice";
 import type { AppDispatch } from "../store";
 import EventForm from "./EventForm";
-import { emptyEventValues, isEventFormComplete, type EventFormValues } from "./eventFormValues";
+import { toUtc } from "../time";
+import {
+  emptyEventValues,
+  isEventFormComplete,
+  type EventFormValues,
+} from "./eventFormValues";
 
 function CreateEvent() {
   const dispatch = useDispatch<AppDispatch>();
-  const [values, setValues] = useState<EventFormValues>(() => ({ ...emptyEventValues }));
+  const [values, setValues] = useState<EventFormValues>(() => ({
+    ...emptyEventValues,
+  }));
 
   const canSubmit = isEventFormComplete(values);
 
   const handleCreateEvent = () => {
     if (!canSubmit) return;
-    dispatch(addEvent(values));
+    const utcValues: EventFormValues = {
+      ...values,
+      ...toUtc(values.startDate, values.startTime, values.timezone),
+      ...toUtc(values.endDate, values.endTime, values.timezone),
+    };
+    dispatch(addEvent(utcValues));
   };
 
   return (

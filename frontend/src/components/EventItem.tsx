@@ -11,6 +11,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import PersonIcon from "@mui/icons-material/Person";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import type { Event } from "../features/events/eventSlice";
+import { formatIsoInTimezone, fromUtc } from "../time";
 import EditEventDialog from "./EditEventDialog";
 import EventLogsDialog from "./EventLogsDialog";
 import TimezoneSelect from "./TimezoneSelect";
@@ -24,15 +25,25 @@ function EventItem({ event }: EventItemProps) {
   const [editing, setEditing] = useState(false);
   const [viewingLogs, setViewingLogs] = useState(false);
 
+  const startParts = fromUtc(event.startDate, event.startTime, timezone);
+  const endParts = fromUtc(event.endDate, event.endTime, timezone);
   const start =
-    event.startDate && event.startTime ? dayjs(`${event.startDate}T${event.startTime}`) : null;
+    startParts.date && startParts.time
+      ? dayjs(`${startParts.date}T${startParts.time}`)
+      : null;
   const end =
-    event.endDate && event.endTime ? dayjs(`${event.endDate}T${event.endTime}`) : null;
+    endParts.date && endParts.time
+      ? dayjs(`${endParts.date}T${endParts.time}`)
+      : null;
 
   return (
     <Card sx={{ p: 3 }}>
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-        <TimezoneSelect value={timezone} onChange={setTimezone} label="View in Timezone" />
+        <TimezoneSelect
+          value={timezone}
+          onChange={setTimezone}
+          label="View in Timezone"
+        />
 
         <Box
           sx={{
@@ -60,44 +71,72 @@ function EventItem({ event }: EventItemProps) {
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             <ScheduleIcon fontSize="small" color="action" />
-            <Typography variant="body2">{start ? start.format("h:mm a") : "—"}</Typography>
+            <Typography variant="body2">
+              {start ? start.format("h:mm a") : "—"}
+            </Typography>
           </Box>
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             <CalendarMonthIcon fontSize="small" color="action" />
-            <Typography variant="body2">End: {end ? end.format("MMM D, YYYY") : "—"}</Typography>
+            <Typography variant="body2">
+              End: {end ? end.format("MMM D, YYYY") : "—"}
+            </Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             <ScheduleIcon fontSize="small" color="action" />
-            <Typography variant="body2">{end ? end.format("h:mm a") : "—"}</Typography>
+            <Typography variant="body2">
+              {end ? end.format("h:mm a") : "—"}
+            </Typography>
           </Box>
         </Box>
 
         <Divider />
 
         <Typography variant="body2" color="text.secondary">
-          Created: {dayjs(event.createdAt).format("MMM D, YYYY [at] hh:mm A")}
+          Created:{" "}
+          {formatIsoInTimezone(
+            event.createdAt,
+            timezone,
+            "MMM D, YYYY [at] hh:mm A",
+          )}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Updated: {dayjs(event.updatedAt).format("MMM D, YYYY [at] hh:mm A")}
+          Updated:{" "}
+          {formatIsoInTimezone(
+            event.updatedAt,
+            timezone,
+            "MMM D, YYYY [at] hh:mm A",
+          )}
         </Typography>
 
         <Divider />
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button size="small" startIcon={<EditIcon />} onClick={() => setEditing(true)}>
+          <Button
+            size="small"
+            startIcon={<EditIcon />}
+            onClick={() => setEditing(true)}
+          >
             Edit
           </Button>
-          <Button size="small" startIcon={<ArticleIcon />} onClick={() => setViewingLogs(true)}>
+          <Button
+            size="small"
+            startIcon={<ArticleIcon />}
+            onClick={() => setViewingLogs(true)}
+          >
             View Logs
           </Button>
         </Box>
       </Box>
 
-      {editing && <EditEventDialog event={event} onClose={() => setEditing(false)} />}
-      {viewingLogs && <EventLogsDialog event={event} onClose={() => setViewingLogs(false)} />}
+      {editing && (
+        <EditEventDialog event={event} onClose={() => setEditing(false)} />
+      )}
+      {viewingLogs && (
+        <EventLogsDialog event={event} onClose={() => setViewingLogs(false)} />
+      )}
     </Card>
   );
 }

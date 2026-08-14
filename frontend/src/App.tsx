@@ -1,5 +1,5 @@
 import "./App.css";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import Box from "@mui/material/Box";
 import { CssBaseline, ThemeProvider } from "@mui/material";
@@ -13,8 +13,11 @@ import Body from "./components/Body";
 
 function AppContent() {
   const dispatch = useDispatch<AppDispatch>();
+  const didFetch = useRef(false);
 
   useEffect(() => {
+    if (didFetch.current) return;
+    didFetch.current = true;
     dispatch(fetchProfiles());
     dispatch(fetchEvents());
   }, [dispatch]);

@@ -9,6 +9,7 @@ import { updateEvent } from "../features/events/eventSlice";
 import type { Event } from "../features/events/eventSlice";
 import type { AppDispatch } from "../store";
 import EventForm from "./EventForm";
+import { fromUtc, toUtc } from "../time";
 import { isEventFormComplete, type EventFormValues } from "./eventFormValues";
 
 interface EditEventDialogProps {
@@ -17,13 +18,15 @@ interface EditEventDialogProps {
 }
 
 function toValues(event: Event): EventFormValues {
+  const start = fromUtc(event.startDate, event.startTime, event.timezone);
+  const end = fromUtc(event.endDate, event.endTime, event.timezone);
   return {
     profiles: event.profiles,
     timezone: event.timezone,
-    startDate: event.startDate,
-    startTime: event.startTime,
-    endDate: event.endDate,
-    endTime: event.endTime,
+    startDate: start.date,
+    startTime: start.time,
+    endDate: end.date,
+    endTime: end.time,
   };
 }
 
@@ -35,7 +38,12 @@ function EditEventDialog({ event, onClose }: EditEventDialogProps) {
 
   const handleUpdate = () => {
     if (!canSubmit) return;
-    dispatch(updateEvent({ id: event.id, changes: values }));
+    const utcValues: EventFormValues = {
+      ...values,
+      ...toUtc(values.startDate, values.startTime, values.timezone),
+      ...toUtc(values.endDate, values.endTime, values.timezone),
+    };
+    dispatch(updateEvent({ id: event.id, changes: utcValues }));
     onClose();
   };
 
@@ -47,7 +55,11 @@ function EditEventDialog({ event, onClose }: EditEventDialogProps) {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={handleUpdate} disabled={!canSubmit}>
+        <Button
+          variant="contained"
+          onClick={handleUpdate}
+          disabled={!canSubmit}
+        >
           Update Event
         </Button>
       </DialogActions>
