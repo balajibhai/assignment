@@ -1,5 +1,6 @@
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import dayjs from "dayjs";
-import { useSelector } from "react-redux";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Dialog from "@mui/material/Dialog";
@@ -9,8 +10,9 @@ import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 import ScheduleIcon from "@mui/icons-material/Schedule";
-import { selectEventLogs } from "../features/events/eventSlice";
+import { fetchEventLogs, selectEventLogs } from "../features/events/eventSlice";
 import type { Event, ModifiedKey } from "../features/events/eventSlice";
+import type { AppDispatch } from "../store";
 
 interface EventLogsDialogProps {
   event: Event;
@@ -33,11 +35,18 @@ function describeChange(modifiedKey: ModifiedKey): string {
 }
 
 function EventLogsDialog({ event, onClose }: EventLogsDialogProps) {
+  const dispatch = useDispatch<AppDispatch>();
   const logs = useSelector(selectEventLogs);
+
+  useEffect(() => {
+    dispatch(fetchEventLogs(event.id));
+  }, [dispatch, event.id]);
 
   const eventLogs = logs
     .filter((log) => log.entityId === event.id)
-    .sort((a, b) => dayjs(b.timestamp).valueOf() - dayjs(a.timestamp).valueOf());
+    .sort(
+      (a, b) => dayjs(b.timestamp).valueOf() - dayjs(a.timestamp).valueOf(),
+    );
 
   return (
     <Dialog open onClose={onClose} fullWidth maxWidth="sm">
@@ -58,14 +67,20 @@ function EventLogsDialog({ event, onClose }: EventLogsDialogProps) {
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {eventLogs.map((log) => (
               <Card key={log._id} sx={{ p: 2 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
+                >
                   <ScheduleIcon fontSize="small" color="action" />
                   <Typography variant="body2">
                     {dayjs(log.timestamp).format("MMM D, YYYY [at] hh.mm A")}
                   </Typography>
                 </Box>
                 {log.modifiedKeys.map((modifiedKey) => (
-                  <Typography key={modifiedKey.key} variant="body2" color="text.secondary">
+                  <Typography
+                    key={modifiedKey.key}
+                    variant="body2"
+                    color="text.secondary"
+                  >
                     {describeChange(modifiedKey)}
                   </Typography>
                 ))}

@@ -1,6 +1,7 @@
-import { createSlice, nanoid, type PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { RootState } from "../../store";
 import type { Profile } from "../profiles/profileSlice";
+import { api } from "../../api";
 
 export interface Event {
   id: string;
@@ -28,103 +29,96 @@ export interface EventLog {
   timestamp: string;
 }
 
+export type EventChanges = Omit<Event, "id" | "createdAt" | "updatedAt">;
+
 interface EventsState {
   events: Event[];
   logs: EventLog[];
+  status: "idle" | "loading" | "succeeded" | "failed";
+  error: string | null;
 }
 
 const initialState: EventsState = {
   events: [],
   logs: [],
+  status: "idle",
+  error: null,
 };
 
-const sameProfiles = (a: Profile[], b: Profile[]) =>
-  a.length === b.length &&
-  a.every((profile, index) => profile.id === b[index].id);
+export const fetchEvents = createAsyncThunk("events/fetchEvents", async () => {
+  return api.get<Event[]>("/events");
+});
 
-const dateTime = (date: string, time: string) =>
-  date && time ? `${date}T${time}` : "";
+export const addEvent = createAsyncThunk(
+  "events/addEvent",
+  async (payload: EventChanges) => {
+    return api.post<Event>("/events", payload);
+  },
+);
+
+export const updateEvent = createAsyncThunk(
+  "events/updateEvent",
+  async ({ id, changes }: { id: string; changes: EventChanges }) => {
+    return api.put<{ event: Event; log: EventLog | null }>(
+      `/events/${id}`,
+      changes,
+    );
+  },
+);
+
+export const fetchEventLogs = createAsyncThunk(
+  "events/fetchEventLogs",
+  async (entityId: string) => {
+    return api.get<EventLog[]>(`/events/${entityId}/logs`);
+  },
+);
 
 const eventsSlice = createSlice({
   name: "events",
   initialState,
-  reducers: {
-    addEvent: {
-      reducer(state, action: PayloadAction<Event>) {
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchEvents.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(fetchEvents.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.events = action.payload;
+      })
+      .addCase(fetchEvents.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.error.message ?? "Failed to load events";
+      })
+      .addCase(addEvent.fulfilled, (state, action) => {
         state.events.push(action.payload);
-      },
-      prepare(payload: Omit<Event, "id" | "createdAt" | "updatedAt">) {
-        const now = new Date().toISOString();
-        return {
-          payload: { ...payload, id: nanoid(), createdAt: now, updatedAt: now },
-        };
-      },
-    },
-    updateEvent(
-      state,
-      action: PayloadAction<{
-        id: string;
-        changes: Omit<Event, "id" | "createdAt" | "updatedAt">;
-      }>,
-    ) {
-      const event = state.events.find((e) => e.id === action.payload.id);
-      if (!event) return;
-      const { changes } = action.payload;
-
-      const modifiedKeys: ModifiedKey[] = [];
-
-      if (changes.timezone !== event.timezone) {
-        modifiedKeys.push({
-          key: "timezone",
-          old: event.timezone,
-          new: changes.timezone,
-        });
-      }
-      if (
-        dateTime(changes.startDate, changes.startTime) !==
-        dateTime(event.startDate, event.startTime)
-      ) {
-        modifiedKeys.push({
-          key: "start",
-          old: dateTime(event.startDate, event.startTime),
-          new: dateTime(changes.startDate, changes.startTime),
-        });
-      }
-      if (
-        dateTime(changes.endDate, changes.endTime) !==
-        dateTime(event.endDate, event.endTime)
-      ) {
-        modifiedKeys.push({
-          key: "end",
-          old: dateTime(event.endDate, event.endTime),
-          new: dateTime(changes.endDate, changes.endTime),
-        });
-      }
-      if (!sameProfiles(changes.profiles, event.profiles)) {
-        modifiedKeys.push({
-          key: "profiles",
-          old: event.profiles.map((profile) => profile.name),
-          new: changes.profiles.map((profile) => profile.name),
-        });
-      }
-
-      Object.assign(event, changes);
-      event.updatedAt = new Date().toISOString();
-
-      if (modifiedKeys.length > 0) {
-        state.logs.push({
-          _id: nanoid(),
-          entityId: event.id,
-          entityType: "event",
-          modifiedKeys,
-          timestamp: event.updatedAt,
-        });
-      }
-    },
+      })
+      .addCase(updateEvent.fulfilled, (state, action) => {
+        const { event, log } = action.payload;
+        const index = state.events.findIndex((e) => e.id === event.id);
+        if (index !== -1) {
+          state.events[index] = event;
+        } else {
+          state.events.push(event);
+        }
+        if (log) {
+          const logIndex = state.logs.findIndex((l) => l._id === log._id);
+          if (logIndex !== -1) {
+            state.logs[logIndex] = log;
+          } else {
+            state.logs.push(log);
+          }
+        }
+      })
+      .addCase(fetchEventLogs.fulfilled, (state, action) => {
+        const entityId = action.meta.arg;
+        state.logs = [
+          ...state.logs.filter((log) => log.entityId !== entityId),
+          ...action.payload,
+        ];
+      });
   },
 });
-
-export const { addEvent, updateEvent } = eventsSlice.actions;
 
 export const selectEvents = (state: RootState) => state.events.events;
 
