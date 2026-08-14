@@ -1,0 +1,98 @@
+import { useState } from "react";
+import dayjs from "dayjs";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import Divider from "@mui/material/Divider";
+import Typography from "@mui/material/Typography";
+import ArticleIcon from "@mui/icons-material/Article";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import EditIcon from "@mui/icons-material/Edit";
+import PersonIcon from "@mui/icons-material/Person";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import type { Event } from "../features/events/eventSlice";
+import TimezoneSelect from "./TimezoneSelect";
+
+interface EventItemProps {
+  event: Event;
+}
+
+function EventItem({ event }: EventItemProps) {
+  const [timezone, setTimezone] = useState(event.timezone);
+
+  const start =
+    event.startDate && event.startTime ? dayjs(`${event.startDate}T${event.startTime}`) : null;
+  const end =
+    event.endDate && event.endTime ? dayjs(`${event.endDate}T${event.endTime}`) : null;
+
+  return (
+    <Card sx={{ p: 3 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <TimezoneSelect value={timezone} onChange={setTimezone} label="View in Timezone" />
+
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            bgcolor: "action.hover",
+            borderRadius: 2,
+            px: 1.5,
+            py: 1,
+          }}
+        >
+          <PersonIcon fontSize="small" color="action" />
+          <Typography variant="body2">
+            {event.profiles.map((profile) => profile.name).join(", ")}
+          </Typography>
+        </Box>
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <CalendarMonthIcon fontSize="small" color="action" />
+            <Typography variant="body2">
+              Start: {start ? start.format("MMM D, YYYY") : "—"}
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <ScheduleIcon fontSize="small" color="action" />
+            <Typography variant="body2">{start ? start.format("h:mm a") : "—"}</Typography>
+          </Box>
+        </Box>
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <CalendarMonthIcon fontSize="small" color="action" />
+            <Typography variant="body2">End: {end ? end.format("MMM D, YYYY") : "—"}</Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <ScheduleIcon fontSize="small" color="action" />
+            <Typography variant="body2">{end ? end.format("h:mm a") : "—"}</Typography>
+          </Box>
+        </Box>
+
+        <Divider />
+
+        <Typography variant="body2" color="text.secondary">
+          Created: {dayjs(event.createdAt).format("MMM D, YYYY [at] hh:mm A")}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Updated: {dayjs(event.updatedAt).format("MMM D, YYYY [at] hh:mm A")}
+        </Typography>
+
+        <Divider />
+
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button size="small" startIcon={<EditIcon />}>
+            Edit
+          </Button>
+          <Button size="small" startIcon={<ArticleIcon />}>
+            View Logs
+          </Button>
+        </Box>
+      </Box>
+    </Card>
+  );
+}
+
+export default EventItem;

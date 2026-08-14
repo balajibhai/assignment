@@ -4,7 +4,7 @@ import ProfileDropdown from "./ProfileDropdown";
 
 function Header() {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: 3, py: 2 }}>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: 3, py: 2, textAlign: "left" }}>
       <Box sx={{ flexGrow: 1 }}>
         <Typography variant="h5" component="div">
           Event Management
