@@ -12,6 +12,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import type { Event } from "../features/events/eventSlice";
 import EditEventDialog from "./EditEventDialog";
+import EventLogsDialog from "./EventLogsDialog";
 import TimezoneSelect from "./TimezoneSelect";
 
 interface EventItemProps {
@@ -21,6 +22,7 @@ interface EventItemProps {
 function EventItem({ event }: EventItemProps) {
   const [timezone, setTimezone] = useState(event.timezone);
   const [editing, setEditing] = useState(false);
+  const [viewingLogs, setViewingLogs] = useState(false);
 
   const start =
     event.startDate && event.startTime ? dayjs(`${event.startDate}T${event.startTime}`) : null;
@@ -88,13 +90,14 @@ function EventItem({ event }: EventItemProps) {
           <Button size="small" startIcon={<EditIcon />} onClick={() => setEditing(true)}>
             Edit
           </Button>
-          <Button size="small" startIcon={<ArticleIcon />}>
+          <Button size="small" startIcon={<ArticleIcon />} onClick={() => setViewingLogs(true)}>
             View Logs
           </Button>
         </Box>
       </Box>
 
       {editing && <EditEventDialog event={event} onClose={() => setEditing(false)} />}
+      {viewingLogs && <EventLogsDialog event={event} onClose={() => setViewingLogs(false)} />}
     </Card>
   );
 }

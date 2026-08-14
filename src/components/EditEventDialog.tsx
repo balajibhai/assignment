@@ -9,7 +9,7 @@ import { updateEvent } from "../features/events/eventSlice";
 import type { Event } from "../features/events/eventSlice";
 import type { AppDispatch } from "../store";
 import EventForm from "./EventForm";
-import type { EventFormValues } from "./eventFormValues";
+import { isEventFormComplete, type EventFormValues } from "./eventFormValues";
 
 interface EditEventDialogProps {
   event: Event;
@@ -31,7 +31,10 @@ function EditEventDialog({ event, onClose }: EditEventDialogProps) {
   const dispatch = useDispatch<AppDispatch>();
   const [values, setValues] = useState<EventFormValues>(() => toValues(event));
 
+  const canSubmit = isEventFormComplete(values);
+
   const handleUpdate = () => {
+    if (!canSubmit) return;
     dispatch(updateEvent({ id: event.id, changes: values }));
     onClose();
   };
@@ -44,7 +47,7 @@ function EditEventDialog({ event, onClose }: EditEventDialogProps) {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={handleUpdate}>
+        <Button variant="contained" onClick={handleUpdate} disabled={!canSubmit}>
           Update Event
         </Button>
       </DialogActions>

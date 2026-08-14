@@ -13,7 +13,29 @@ interface EventFormProps {
 function EventForm({ values, onChange }: EventFormProps) {
   const isEndValid = (date: string, time: string) => {
     if (!values.startDate || !values.startTime) return true;
-    return dayjs(`${date}T${time}`).isAfter(dayjs(`${values.startDate}T${values.startTime}`));
+    return dayjs(`${date}T${time}`).isAfter(
+      dayjs(`${values.startDate}T${values.startTime}`),
+    );
+  };
+
+  const applyStartChange = (next: EventFormValues): EventFormValues => {
+    if (!next.startDate || !next.startTime) return next;
+    const end =
+      next.endDate && next.endTime
+        ? dayjs(`${next.endDate}T${next.endTime}`)
+        : null;
+    if (end && !end.isAfter(dayjs(`${next.startDate}T${next.startTime}`))) {
+      return { ...next, endDate: "", endTime: "" };
+    }
+    return next;
+  };
+
+  const handleStartDateChange = (value: string) => {
+    onChange(applyStartChange({ ...values, startDate: value }));
+  };
+
+  const handleStartTimeChange = (value: string) => {
+    onChange(applyStartChange({ ...values, startTime: value }));
   };
 
   const handleEndDateChange = (value: string) => {
@@ -40,8 +62,8 @@ function EventForm({ values, onChange }: EventFormProps) {
         label="Start Date & Time"
         date={values.startDate}
         time={values.startTime}
-        onDateChange={(startDate) => onChange({ ...values, startDate })}
-        onTimeChange={(startTime) => onChange({ ...values, startTime })}
+        onDateChange={handleStartDateChange}
+        onTimeChange={handleStartTimeChange}
       />
       <DateTimeField
         label="End Date & Time"
@@ -50,7 +72,11 @@ function EventForm({ values, onChange }: EventFormProps) {
         onDateChange={handleEndDateChange}
         onTimeChange={handleEndTimeChange}
         minDate={values.startDate || undefined}
-        minTime={values.endDate === values.startDate ? values.startTime || undefined : undefined}
+        minTime={
+          values.endDate === values.startDate
+            ? values.startTime || undefined
+            : undefined
+        }
       />
     </Box>
   );

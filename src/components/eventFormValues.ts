@@ -17,3 +17,6 @@ export const emptyEventValues: EventFormValues = {
   endDate: "",
   endTime: "",
 };
+
+export const isEventFormComplete = (values: EventFormValues): boolean =>
+  Boolean(values.startDate && values.startTime && values.endDate && values.endTime);
