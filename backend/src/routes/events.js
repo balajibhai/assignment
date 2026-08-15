@@ -5,8 +5,6 @@ import { serializeEvent, serializeLog } from "../serializers.js";
 
 const router = Router();
 
-const dateTime = (date, time) => (date && time ? `${date}T${time}` : "");
-
 const sameProfiles = (a, b) =>
   a.length === b.length &&
   a.every((profile, index) => profile.id === b[index].id);
@@ -14,32 +12,15 @@ const sameProfiles = (a, b) =>
 function computeModifiedKeys(existing, resolved) {
   const modifiedKeys = [];
 
-  if (resolved.timezone !== existing.timezone) {
-    modifiedKeys.push({
-      key: "timezone",
-      old: existing.timezone,
-      new: resolved.timezone,
-    });
-  }
-  if (
-    dateTime(resolved.startDate, resolved.startTime) !==
-    dateTime(existing.startDate, existing.startTime)
-  ) {
+  if (resolved.start !== existing.start) {
     modifiedKeys.push({
       key: "start",
-      old: dateTime(existing.startDate, existing.startTime),
-      new: dateTime(resolved.startDate, resolved.startTime),
+      old: existing.start,
+      new: resolved.start,
     });
   }
-  if (
-    dateTime(resolved.endDate, resolved.endTime) !==
-    dateTime(existing.endDate, existing.endTime)
-  ) {
-    modifiedKeys.push({
-      key: "end",
-      old: dateTime(existing.endDate, existing.endTime),
-      new: dateTime(resolved.endDate, resolved.endTime),
-    });
+  if (resolved.end !== existing.end) {
+    modifiedKeys.push({ key: "end", old: existing.end, new: resolved.end });
   }
   if (!sameProfiles(resolved.profiles, existing.profiles)) {
     modifiedKeys.push({
@@ -63,22 +44,8 @@ router.get("/", async (req, res, next) => {
 
 router.post("/", async (req, res, next) => {
   try {
-    const {
-      profiles = [],
-      timezone = "",
-      startDate = "",
-      startTime = "",
-      endDate = "",
-      endTime = "",
-    } = req.body ?? {};
-    const event = await Event.create({
-      profiles,
-      timezone,
-      startDate,
-      startTime,
-      endDate,
-      endTime,
-    });
+    const { profiles = [], start = "", end = "" } = req.body ?? {};
+    const event = await Event.create({ profiles, start, end });
     res.status(201).json(serializeEvent(event));
   } catch (err) {
     next(err);
@@ -95,11 +62,8 @@ router.put("/:id", async (req, res, next) => {
     const changes = req.body ?? {};
     const resolved = {
       profiles: changes.profiles ?? event.profiles,
-      timezone: changes.timezone ?? event.timezone,
-      startDate: changes.startDate ?? event.startDate,
-      startTime: changes.startTime ?? event.startTime,
-      endDate: changes.endDate ?? event.endDate,
-      endTime: changes.endTime ?? event.endTime,
+      start: changes.start ?? event.start,
+      end: changes.end ?? event.end,
     };
 
     const modifiedKeys = computeModifiedKeys(event, resolved);

@@ -10,31 +10,25 @@ export interface DateTimeParts {
   time: string;
 }
 
-export const toUtc = (
+export const toIsoUtc = (
   date: string,
   time: string,
   timezone: string,
-): DateTimeParts => {
-  if (!date || !time || !timezone) return { date, time };
+): string => {
+  if (!date || !time || !timezone) return "";
   const instant = dayjs.tz(`${date}T${time}`, timezone);
-  if (!instant.isValid()) return { date, time };
-  return {
-    date: instant.utc().format("YYYY-MM-DD"),
-    time: instant.utc().format("HH:mm"),
-  };
+  if (!instant.isValid()) return "";
+  return instant.utc().toISOString();
 };
 
-export const fromUtc = (
-  date: string,
-  time: string,
-  timezone: string,
-): DateTimeParts => {
-  if (!date || !time || !timezone) return { date, time };
-  const instant = dayjs.utc(`${date}T${time}`);
-  if (!instant.isValid()) return { date, time };
+export const fromIsoUtc = (iso: string, timezone: string): DateTimeParts => {
+  if (!iso) return { date: "", time: "" };
+  const instant = dayjs(iso);
+  if (!instant.isValid()) return { date: "", time: "" };
+  const inZone = timezone ? instant.tz(timezone) : instant.utc();
   return {
-    date: instant.tz(timezone).format("YYYY-MM-DD"),
-    time: instant.tz(timezone).format("HH:mm"),
+    date: inZone.format("YYYY-MM-DD"),
+    time: inZone.format("HH:mm"),
   };
 };
 

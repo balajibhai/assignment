@@ -6,11 +6,8 @@ import { api } from "../../api";
 export interface Event {
   id: string;
   profiles: Profile[];
-  timezone: string;
-  startDate: string;
-  startTime: string;
-  endDate: string;
-  endTime: string;
+  start: string;
+  end: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -7,9 +7,10 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import { updateEvent } from "../features/events/eventSlice";
 import type { Event } from "../features/events/eventSlice";
+import { selectTimezone } from "../features/ui/uiSlice";
 import type { AppDispatch } from "../store";
 import EventForm from "./EventForm";
-import { fromUtc, toUtc } from "../time";
+import { fromIsoUtc, toIsoUtc } from "../time";
 import { isEventFormComplete, type EventFormValues } from "./eventFormValues";
 
 interface EditEventDialogProps {
@@ -17,12 +18,11 @@ interface EditEventDialogProps {
   onClose: () => void;
 }
 
-function toValues(event: Event): EventFormValues {
-  const start = fromUtc(event.startDate, event.startTime, event.timezone);
-  const end = fromUtc(event.endDate, event.endTime, event.timezone);
+function toValues(event: Event, timezone: string): EventFormValues {
+  const start = fromIsoUtc(event.start, timezone);
+  const end = fromIsoUtc(event.end, timezone);
   return {
     profiles: event.profiles,
-    timezone: event.timezone,
     startDate: start.date,
     startTime: start.time,
     endDate: end.date,
@@ -32,18 +32,26 @@ function toValues(event: Event): EventFormValues {
 
 function EditEventDialog({ event, onClose }: EditEventDialogProps) {
   const dispatch = useDispatch<AppDispatch>();
-  const [values, setValues] = useState<EventFormValues>(() => toValues(event));
+  const timezone = useSelector(selectTimezone);
+  const [values, setValues] = useState<EventFormValues>(() =>
+    toValues(event, timezone),
+  );
 
   const canSubmit = isEventFormComplete(values);
 
   const handleUpdate = () => {
     if (!canSubmit) return;
-    const utcValues: EventFormValues = {
-      ...values,
-      ...toUtc(values.startDate, values.startTime, values.timezone),
-      ...toUtc(values.endDate, values.endTime, values.timezone),
-    };
-    dispatch(updateEvent({ id: event.id, changes: utcValues }));
+
+    dispatch(
+      updateEvent({
+        id: event.id,
+        changes: {
+          profiles: values.profiles,
+          start: toIsoUtc(values.startDate, values.startTime, timezone),
+          end: toIsoUtc(values.endDate, values.endTime, timezone),
+        },
+      }),
+    );
     onClose();
   };
 

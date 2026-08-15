@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSelector } from "react-redux";
 import dayjs from "dayjs";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -11,22 +12,22 @@ import EditIcon from "@mui/icons-material/Edit";
 import PersonIcon from "@mui/icons-material/Person";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import type { Event } from "../features/events/eventSlice";
-import { formatIsoInTimezone, fromUtc } from "../time";
+import { selectTimezone } from "../features/ui/uiSlice";
+import { formatIsoInTimezone, fromIsoUtc } from "../time";
 import EditEventDialog from "./EditEventDialog";
 import EventLogsDialog from "./EventLogsDialog";
-import TimezoneSelect from "./TimezoneSelect";
 
 interface EventItemProps {
   event: Event;
 }
 
 function EventItem({ event }: EventItemProps) {
-  const [timezone, setTimezone] = useState(event.timezone);
+  const timezone = useSelector(selectTimezone);
   const [editing, setEditing] = useState(false);
   const [viewingLogs, setViewingLogs] = useState(false);
 
-  const startParts = fromUtc(event.startDate, event.startTime, timezone);
-  const endParts = fromUtc(event.endDate, event.endTime, timezone);
+  const startParts = fromIsoUtc(event.start, timezone);
+  const endParts = fromIsoUtc(event.end, timezone);
   const start =
     startParts.date && startParts.time
       ? dayjs(`${startParts.date}T${startParts.time}`)
@@ -39,12 +40,6 @@ function EventItem({ event }: EventItemProps) {
   return (
     <Card sx={{ p: 3 }}>
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-        <TimezoneSelect
-          value={timezone}
-          onChange={setTimezone}
-          label="View in Timezone"
-        />
-
         <Box
           sx={{
             display: "flex",

@@ -2,7 +2,6 @@ import type { Profile } from "../features/profiles/profileSlice";
 
 export interface EventFormValues {
   profiles: Profile[];
-  timezone: string;
   startDate: string;
   startTime: string;
   endDate: string;
@@ -11,7 +10,6 @@ export interface EventFormValues {
 
 export const emptyEventValues: EventFormValues = {
   profiles: [],
-  timezone: "",
   startDate: "",
   startTime: "",
   endDate: "",
@@ -19,4 +17,7 @@ export const emptyEventValues: EventFormValues = {
 };
 
 export const isEventFormComplete = (values: EventFormValues): boolean =>
-  Boolean(values.startDate && values.startTime && values.endDate && values.endTime);
+  values.profiles.length > 0 &&
+  Boolean(
+    values.startDate && values.startTime && values.endDate && values.endTime,
+  );

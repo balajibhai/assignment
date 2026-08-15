@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import { addEvent } from "../features/events/eventSlice";
+import { selectCurrentProfile } from "../features/profiles/profileSlice";
+import { selectTimezone } from "../features/ui/uiSlice";
 import type { AppDispatch } from "../store";
 import EventForm from "./EventForm";
-import { toUtc } from "../time";
+import { toIsoUtc } from "../time";
 import {
   emptyEventValues,
   isEventFormComplete,
@@ -14,20 +16,28 @@ import {
 
 function CreateEvent() {
   const dispatch = useDispatch<AppDispatch>();
+  const timezone = useSelector(selectTimezone);
+  const currentProfile = useSelector(selectCurrentProfile);
   const [values, setValues] = useState<EventFormValues>(() => ({
     ...emptyEventValues,
+    profiles: currentProfile ? [currentProfile] : [],
   }));
 
   const canSubmit = isEventFormComplete(values);
 
   const handleCreateEvent = () => {
     if (!canSubmit) return;
-    const utcValues: EventFormValues = {
-      ...values,
-      ...toUtc(values.startDate, values.startTime, values.timezone),
-      ...toUtc(values.endDate, values.endTime, values.timezone),
-    };
-    dispatch(addEvent(utcValues));
+    dispatch(
+      addEvent({
+        profiles: values.profiles,
+        start: toIsoUtc(values.startDate, values.startTime, timezone),
+        end: toIsoUtc(values.endDate, values.endTime, timezone),
+      }),
+    );
+    setValues({
+      ...emptyEventValues,
+      profiles: currentProfile ? [currentProfile] : [],
+    });
   };
 
   return (

@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import dayjs from "dayjs";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Dialog from "@mui/material/Dialog";
@@ -12,7 +11,9 @@ import CloseIcon from "@mui/icons-material/Close";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import { fetchEventLogs, selectEventLogs } from "../features/events/eventSlice";
 import type { Event, ModifiedKey } from "../features/events/eventSlice";
+import { selectTimezone } from "../features/ui/uiSlice";
 import type { AppDispatch } from "../store";
+import { formatIsoInTimezone } from "../time";
 
 interface EventLogsDialogProps {
   event: Event;
@@ -25,8 +26,6 @@ function describeChange(modifiedKey: ModifiedKey): string {
       return "Start date/time updated";
     case "end":
       return "End date/time updated";
-    case "timezone":
-      return `Timezone changed to: ${modifiedKey.new}`;
     case "profiles":
       return `Profiles changed to: ${(modifiedKey.new as string[]).join(", ")}`;
     default:
@@ -37,6 +36,7 @@ function describeChange(modifiedKey: ModifiedKey): string {
 function EventLogsDialog({ event, onClose }: EventLogsDialogProps) {
   const dispatch = useDispatch<AppDispatch>();
   const logs = useSelector(selectEventLogs);
+  const timezone = useSelector(selectTimezone);
   const fetchedEventIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -47,9 +47,7 @@ function EventLogsDialog({ event, onClose }: EventLogsDialogProps) {
 
   const eventLogs = logs
     .filter((log) => log.entityId === event.id)
-    .sort(
-      (a, b) => dayjs(b.timestamp).valueOf() - dayjs(a.timestamp).valueOf(),
-    );
+    .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
   return (
     <Dialog open onClose={onClose} fullWidth maxWidth="sm">
@@ -75,7 +73,11 @@ function EventLogsDialog({ event, onClose }: EventLogsDialogProps) {
                 >
                   <ScheduleIcon fontSize="small" color="action" />
                   <Typography variant="body2">
-                    {dayjs(log.timestamp).format("MMM D, YYYY [at] hh.mm A")}
+                    {formatIsoInTimezone(
+                      log.timestamp,
+                      timezone,
+                      "MMM D, YYYY [at] hh:mm A",
+                    )}
                   </Typography>
                 </Box>
                 {log.modifiedKeys.map((modifiedKey) => (

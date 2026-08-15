@@ -1,8 +1,10 @@
-import dayjs from "dayjs";
+import { useDispatch, useSelector } from "react-redux";
 import Box from "@mui/material/Box";
 import DateTimeField from "./DateTimeField";
 import ProfileSelect from "./ProfileSelect";
 import TimezoneSelect from "./TimezoneSelect";
+import { selectTimezone, setTimezone } from "../features/ui/uiSlice";
+import type { AppDispatch } from "../store";
 import type { EventFormValues } from "./eventFormValues";
 
 interface EventFormProps {
@@ -11,20 +13,27 @@ interface EventFormProps {
 }
 
 function EventForm({ values, onChange }: EventFormProps) {
-  const isEndValid = (date: string, time: string) => {
-    if (!values.startDate || !values.startTime) return true;
-    return dayjs(`${date}T${time}`).isAfter(
-      dayjs(`${values.startDate}T${values.startTime}`),
-    );
+  const dispatch = useDispatch<AppDispatch>();
+  const timezone = useSelector(selectTimezone);
+
+  const isEndDateValid = (date: string) => {
+    if (!values.startDate || !date) return true;
+    return date >= values.startDate;
+  };
+
+  const isEndTimeValid = (date: string, time: string) => {
+    if (!values.startDate || !values.startTime || !date || !time) return true;
+    if (date > values.startDate) return true;
+    return time > values.startTime;
   };
 
   const applyStartChange = (next: EventFormValues): EventFormValues => {
     if (!next.startDate || !next.startTime) return next;
-    const end =
-      next.endDate && next.endTime
-        ? dayjs(`${next.endDate}T${next.endTime}`)
-        : null;
-    if (end && !end.isAfter(dayjs(`${next.startDate}T${next.startTime}`))) {
+    const endInvalid =
+      Boolean(next.endDate && next.endTime) &&
+      (next.endDate < next.startDate ||
+        (next.endDate === next.startDate && next.endTime <= next.startTime));
+    if (endInvalid) {
       return { ...next, endDate: "", endTime: "" };
     }
     return next;
@@ -39,12 +48,13 @@ function EventForm({ values, onChange }: EventFormProps) {
   };
 
   const handleEndDateChange = (value: string) => {
-    if (!isEndValid(value, values.endTime)) return;
+    if (!isEndDateValid(value)) return;
+    if (values.endTime && !isEndTimeValid(value, values.endTime)) return;
     onChange({ ...values, endDate: value });
   };
 
   const handleEndTimeChange = (value: string) => {
-    if (!isEndValid(values.endDate, value)) return;
+    if (!isEndTimeValid(values.endDate, value)) return;
     onChange({ ...values, endTime: value });
   };
 
@@ -55,8 +65,8 @@ function EventForm({ values, onChange }: EventFormProps) {
         onChange={(profiles) => onChange({ ...values, profiles })}
       />
       <TimezoneSelect
-        value={values.timezone}
-        onChange={(timezone) => onChange({ ...values, timezone })}
+        value={timezone}
+        onChange={(value) => dispatch(setTimezone(value))}
       />
       <DateTimeField
         label="Start Date & Time"

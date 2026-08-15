@@ -11,11 +11,8 @@ const eventProfileSchema = new mongoose.Schema(
 const eventSchema = new mongoose.Schema(
   {
     profiles: { type: [eventProfileSchema], default: [] },
-    timezone: { type: String, default: "" },
-    startDate: { type: String, default: "" },
-    startTime: { type: String, default: "" },
-    endDate: { type: String, default: "" },
-    endTime: { type: String, default: "" },
+    start: { type: String, default: "" },
+    end: { type: String, default: "" },
   },
   { timestamps: true },
 );
