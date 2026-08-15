@@ -7,18 +7,30 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { addProfile, selectProfiles } from "../features/profiles/profileSlice";
-import type { Profile } from "../features/profiles/profileSlice";
+import {
+  addProfile,
+  selectCurrentProfile,
+  selectProfiles,
+  setCurrentProfile,
+  type Profile,
+} from "../features/profiles/profileSlice";
 import type { AppDispatch } from "../store";
 
-interface ProfileSelectProps {
-  value: Profile[];
-  onChange: (profiles: Profile[]) => void;
+interface ProfilePickerProps {
+  multiple?: boolean;
+  value?: Profile[];
+  onChange?: (profiles: Profile[]) => void;
 }
 
-function ProfileSelect({ value, onChange }: ProfileSelectProps) {
+function ProfilePicker({
+  multiple = false,
+  value = [],
+  onChange,
+}: ProfilePickerProps) {
   const dispatch = useDispatch<AppDispatch>();
   const profiles = useSelector(selectProfiles);
+  const currentProfile = useSelector(selectCurrentProfile);
+
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [adding, setAdding] = useState(false);
@@ -42,9 +54,16 @@ function ProfileSelect({ value, onChange }: ProfileSelectProps) {
   );
 
   const handleToggle = (profile: Profile) => {
+    if (!multiple) {
+      dispatch(setCurrentProfile(profile.id));
+      handleClose();
+      return;
+    }
     const isSelected = value.some((p) => p.id === profile.id);
-    onChange(
-      isSelected ? value.filter((p) => p.id !== profile.id) : [...value, profile],
+    onChange?.(
+      isSelected
+        ? value.filter((p) => p.id !== profile.id)
+        : [...value, profile],
     );
   };
 
@@ -56,11 +75,24 @@ function ProfileSelect({ value, onChange }: ProfileSelectProps) {
     setAdding(false);
   };
 
+  const isSelected = (profile: Profile) =>
+    multiple
+      ? value.some((p) => p.id === profile.id)
+      : profile.id === currentProfile?.id;
+
+  const buttonLabel = multiple
+    ? value.length === 0
+      ? "Select profiles..."
+      : `${value.length} ${value.length === 1 ? "profile" : "profiles"} selected`
+    : currentProfile
+      ? currentProfile.name
+      : "Select current profile...";
+
   return (
     <>
       <Button
         variant="outlined"
-        color="inherit"
+        color={multiple || !currentProfile ? "inherit" : "primary"}
         onClick={handleOpen}
         endIcon={
           <svg width="12" height="14" viewBox="0 0 12 14" aria-hidden="true">
@@ -68,25 +100,38 @@ function ProfileSelect({ value, onChange }: ProfileSelectProps) {
             <path d="M6 14 L11 9 H1 Z" fill="currentColor" />
           </svg>
         }
-        sx={{ minWidth: 220, justifyContent: "space-between", textTransform: "none" }}
+        sx={{
+          justifyContent: "space-between",
+          ...(multiple
+            ? { minWidth: 220, textTransform: "none" }
+            : { minWidth: 200 }),
+        }}
       >
-        {value.length === 0
-          ? "Select profiles..."
-          : `${value.length} ${value.length === 1 ? "profile" : "profiles"} selected`}
+        {buttonLabel}
       </Button>
 
       <Menu
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        anchorOrigin={
+          multiple
+            ? { vertical: "bottom", horizontal: "left" }
+            : { vertical: "bottom", horizontal: "right" }
+        }
+        transformOrigin={
+          multiple
+            ? { vertical: "top", horizontal: "left" }
+            : { vertical: "top", horizontal: "right" }
+        }
         slotProps={{ paper: { sx: { width: 300, mt: 1, p: 1 } } }}
       >
         <TextField
           fullWidth
           size="small"
-          placeholder="Search profiles..."
+          placeholder={
+            multiple ? "Search profiles..." : "Search current profile..."
+          }
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
           onKeyDown={(event) => event.stopPropagation()}
@@ -99,10 +144,9 @@ function ProfileSelect({ value, onChange }: ProfileSelectProps) {
             </Typography>
           </Box>
         ) : (
-          filteredProfiles.map((profile) => {
-            const isSelected = value.some((p) => p.id === profile.id);
-            return (
-              <MenuItem key={profile.id} onClick={() => handleToggle(profile)}>
+          filteredProfiles.map((profile) => (
+            <MenuItem key={profile.id} onClick={() => handleToggle(profile)}>
+              {multiple && (
                 <Box
                   sx={{
                     width: 24,
@@ -112,7 +156,7 @@ function ProfileSelect({ value, onChange }: ProfileSelectProps) {
                     alignItems: "center",
                   }}
                 >
-                  {isSelected && (
+                  {isSelected(profile) && (
                     <svg
                       width="16"
                       height="16"
@@ -128,10 +172,10 @@ function ProfileSelect({ value, onChange }: ProfileSelectProps) {
                     </svg>
                   )}
                 </Box>
-                {profile.name}
-              </MenuItem>
-            );
-          })
+              )}
+              {profile.name}
+            </MenuItem>
+          ))
         )}
         <Divider sx={{ my: 1 }} />
         {adding ? (
@@ -170,4 +214,4 @@ function ProfileSelect({ value, onChange }: ProfileSelectProps) {
   );
 }
 
-export default ProfileSelect;
+export default ProfilePicker;

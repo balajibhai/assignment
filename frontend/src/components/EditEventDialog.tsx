@@ -41,7 +41,6 @@ function EditEventDialog({ event, onClose }: EditEventDialogProps) {
 
   const handleUpdate = () => {
     if (!canSubmit) return;
-
     dispatch(
       updateEvent({
         id: event.id,

@@ -1,6 +1,6 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import ProfileDropdown from "./ProfileDropdown";
+import ProfilePicker from "./ProfilePicker";
 
 function Header() {
   return (
@@ -14,7 +14,7 @@ function Header() {
         </Typography>
       </Box>
 
-      <ProfileDropdown />
+      <ProfilePicker />
     </Box>
   );
 }

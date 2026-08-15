@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import Box from "@mui/material/Box";
 import DateTimeField from "./DateTimeField";
-import ProfileSelect from "./ProfileSelect";
+import ProfilePicker from "./ProfilePicker";
 import TimezoneSelect from "./TimezoneSelect";
 import { selectTimezone, setTimezone } from "../features/ui/uiSlice";
 import type { AppDispatch } from "../store";
@@ -60,7 +60,8 @@ function EventForm({ values, onChange }: EventFormProps) {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <ProfileSelect
+      <ProfilePicker
+        multiple
         value={values.profiles}
         onChange={(profiles) => onChange({ ...values, profiles })}
       />

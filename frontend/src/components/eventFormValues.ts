@@ -18,6 +18,4 @@ export const emptyEventValues: EventFormValues = {
 
 export const isEventFormComplete = (values: EventFormValues): boolean =>
   values.profiles.length > 0 &&
-  Boolean(
-    values.startDate && values.startTime && values.endDate && values.endTime,
-  );
+  Boolean(values.startDate && values.startTime && values.endDate && values.endTime);
