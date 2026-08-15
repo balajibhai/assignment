@@ -8,10 +8,7 @@ export function serializeProfile(doc) {
 export function serializeEvent(doc) {
   return {
     id: doc._id.toString(),
-    profiles: (doc.profiles ?? []).map((profile) => ({
-      id: profile.id,
-      name: profile.name,
-    })),
+    profiles: (doc.profiles ?? []).map((profile) => ({ id: profile.id, name: profile.name })),
     start: doc.start,
     end: doc.end,
     createdAt: doc.createdAt.toISOString(),
