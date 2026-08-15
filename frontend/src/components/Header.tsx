@@ -1,8 +1,14 @@
+import { useDispatch } from "react-redux";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import ProfilePicker from "./ProfilePicker";
+import { logout } from "../features/auth/authSlice";
+import type { AppDispatch } from "../store";
 
 function Header() {
+  const dispatch = useDispatch<AppDispatch>();
+
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: 3, py: 2, textAlign: "left" }}>
       <Box sx={{ flexGrow: 1 }}>
@@ -15,6 +21,9 @@ function Header() {
       </Box>
 
       <ProfilePicker />
+      <Button variant="outlined" color="inherit" onClick={() => dispatch(logout())}>
+        Log out
+      </Button>
     </Box>
   );
 }

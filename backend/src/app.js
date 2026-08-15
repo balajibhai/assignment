@@ -3,6 +3,8 @@ import express from "express";
 import cors from "cors";
 import profilesRouter from "./routes/profiles.js";
 import eventsRouter from "./routes/events.js";
+import authRouter from "./routes/auth.js";
+import { requireAuth } from "./middleware/auth.js";
 
 const app = express();
 
@@ -24,14 +26,33 @@ app.use(
     },
   }),
 );
+
+app.use((req, res, next) => {
+  if (Buffer.isBuffer(req.body)) {
+    try {
+      req.body = JSON.parse(req.body.toString("utf8"));
+    } catch {
+      req.body = {};
+    }
+  } else if (typeof req.body === "string") {
+    try {
+      req.body = JSON.parse(req.body);
+    } catch {
+      req.body = {};
+    }
+  }
+  next();
+});
+
 app.use(express.json());
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-app.use("/api/profiles", profilesRouter);
-app.use("/api/events", eventsRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/profiles", requireAuth, profilesRouter);
+app.use("/api/events", requireAuth, eventsRouter);
 
 app.use((req, res) => {
   res.status(404).json({ error: "Not found" });
